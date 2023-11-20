@@ -1,0 +1,44 @@
+{{- $chartname := .Chart.Name }}
+{{- $chartversion := .Chart.Version }}
+{{- $namespace  := .Values.namespace }}
+{{- range $service := .Values.stateless }}
+{{ if $service.ingress }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $service.name }}
+  namespace: {{ $namespace }}
+  labels:
+    chart: "{{ $chartname }}-{{ $chartversion | replace "+" "_" }}"
+  annotations:
+    traefik.ingress.kubernetes.io/preserve-host: "true"
+    {{- range $key, $value := $service.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  ingressClassName: {{ default "traefik-internal" $service.ingress.ingressClassName | quote }}
+  {{- if $service.ingress.tls }}
+  tls:
+    {{- range $service.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ $service.name }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ $service.ingress.host | quote }}
+      http:
+        paths:
+        - path: {{ $service.ingress.uri | quote }}
+          backend:
+            service:
+              name: {{ $service.name }}
+              port: 
+                number: {{  $service.service.internalPort | int }}
+          pathType: Prefix
+---
+{{end}}
+{{end}}

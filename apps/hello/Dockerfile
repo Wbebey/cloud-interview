@@ -14,7 +14,7 @@ FROM node:20.9.0-alpine@sha256:d18f4d9889b217d3fab280cc52fbe1d4caa0e1d2134c6bab9
 
 ENV NODE_ENV=production
 
-ENV PORT=3000
+ENV PORT=80
 
 WORKDIR /app
 
@@ -27,6 +27,6 @@ COPY --from=dependencies /app/node_modules ./node_modules
 
 COPY src/index.js .
 
-EXPOSE 3000
+EXPOSE 80
 
 CMD ["node", "index.js"]

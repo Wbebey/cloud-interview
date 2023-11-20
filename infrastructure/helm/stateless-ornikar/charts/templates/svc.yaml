@@ -1,0 +1,25 @@
+{{- $namespace  := .Values.namespace }}
+{{- $chartname := .Chart.Name }}
+{{- $chartversion := .Chart.Version }}
+{{- range $service := .Values.stateless }}
+{{- if $service.service }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $service.name | quote }}
+  namespace: {{ $namespace }}
+  labels:
+    chart: "{{ $chartname }}-{{ $chartversion | replace "+" "_" }}"
+spec:
+  type: {{ $service.service.type }}
+  ports:
+  - port:  {{  $service.service.internalPort | int }}
+    targetPort: {{  $service.service.internalPort | int }}
+    protocol: TCP
+    name: {{ $service.name | quote }}
+  selector:
+    app: {{ $service.name}}
+---
+{{end}}
+{{end}}

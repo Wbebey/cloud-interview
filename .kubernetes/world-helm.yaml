@@ -1,0 +1,25 @@
+namespace: ornikar
+stateless:
+  - name: "world"
+    replicaCount: 1
+    serviceAccount:
+      create: true
+    env:
+      NODE_ENV: "production"
+      PORT: "80"
+    ingress:
+      uri: "/hello"
+      host: "cupidon"
+      ingressClassName: "traefik-internal"
+    service:
+      internalPort: 80
+      type: ClusterIP
+      probe:
+        http:
+          livenessProbe:
+            path: /
+          readinessProbe:
+            path: /
+    resources:
+      cpu: 100m
+      memory: 128Mi

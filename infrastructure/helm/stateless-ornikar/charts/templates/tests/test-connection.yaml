@@ -1,0 +1,22 @@
+{{- $chartname := .Chart.Name }}
+{{- $chartversion := .Chart.Version }}
+{{- range $service := .Values.stateless }}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ $service.name }}-test-connection"
+  labels:
+    app: "{{ $service.name }}-test-connection"
+    chart: "{{ $chartname }}-{{ $chartversion | replace "+" "_" }}"
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ["{{ $service.name }}:{{ $service.service.internalPort | int }}"]
+  restartPolicy: Never
+---
+{{- end }}

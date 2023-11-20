@@ -1,0 +1,96 @@
+
+{{- $namespace  := .Values.namespace }}
+{{- $chartname := .Chart.Name }}
+{{- $chartversion := .Chart.Version }}
+{{- range $service := .Values.stateless }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $service.name }}
+  namespace: {{ $namespace }}
+  labels:
+    app: {{ $service.name }}
+    chart: "{{ $chartname }}-{{ $chartversion | replace "+" "_" }}"
+spec:
+  replicas: {{ default 1 $service.replicaCount | int }}
+  selector:
+    matchLabels:
+      app: {{ $service.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $service.name }}
+    spec:
+      serviceAccountName: {{ $service.name }}-sa-ksa
+      containers:
+      - name: "stateless-{{ $service.name }}"
+        image: "{{ $service.image }}"
+        imagePullPolicy: IfNotPresent
+        {{ if $service.security }}
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+        {{ end }}
+        {{- if $service.envFrom }}
+        envFrom:
+          {{- if $service.envFrom.configEnv }}
+          - configMapRef:
+              name: {{ $service.envFrom.configEnv }}
+          {{- end }}
+          {{- if $service.envFrom.secretEnv }}
+          - secretRef:
+              name: {{ $service.envFrom.secretEnv }}
+          {{- end }}
+        {{- end }}
+        {{- if $service.env }}
+        env:
+          {{- range $key,$value := $service.env }}
+          - name: {{ $key | quote }}
+            value: {{ $value | quote }}
+          {{- end }}
+        {{- end }}
+        {{ if $service.service }}
+        ports:
+        - containerPort: {{  $service.service.internalPort | int }}
+        {{ end }}
+        {{if $service.service.probe.http}}
+        livenessProbe:
+          httpGet:
+            path: {{ $service.service.probe.http.path | quote }}
+            port: {{  $service.service.internalPort | int }}
+          initialDelaySeconds: 180
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: {{ $service.service.probe.http.path | quote }}
+            port: {{  $service.service.internalPort | int }}
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        {{ end }}
+        {{ if $service.service.probe.exec }}
+        livenessProbe:
+          initialDelaySeconds: {{ default 10 $service.service.probe.exec.livenessProbe.delay }}
+          exec:
+            command: 
+            {{range $livenesscmd :=  $service.service.probe.exec.livenessProbe.commands }}
+              - {{ $livenesscmd | quote}}
+            {{ end }}
+        readinessProbe:
+          initialDelaySeconds: {{default 10  $service.service.probe.exec.readinessProbe.delay  }}
+          exec:
+            command: 
+            {{range $readinesscmd :=  $service.service.probe.exec.readinessProbe.commands }}
+              - {{ $readinesscmd | quote}}
+            {{ end }}
+        {{ end }}
+        resources:
+          limits:
+            cpu: "{{$service.resources.cpu}}"
+            memory: "{{$service.resources.memory}}"
+          requests:
+            cpu: "{{ $service.resources.cpu}}"
+            memory: "{{ $service.resources.memory}}"
+---
+{{ end }}
+

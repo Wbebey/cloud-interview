@@ -1,0 +1,17 @@
+version: '3'
+services:
+  hello:
+    build:
+      context: ./apps/hello
+      dockerfile: Dockerfile
+    image: wbarmis/ornikar-hello:1.0.5
+    ports:
+      - 8080:80
+
+  world:
+    build:
+      context: ./apps/world
+      dockerfile: Dockerfile
+    image: wbarmis/ornikar-world:1.0.5
+    ports:
+      - 8081:80

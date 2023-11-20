@@ -1,0 +1,76 @@
+# Default values for stateless-ornikar.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- (string) Namespace where the service will be deployed
+namespace: saas
+# -- (array) List of stateful services
+# @default -- []
+stateless:
+  # -- Deployment name
+  - name: "saas-backend"
+    # -- Allows configuring the image name. The name must be fully qualified (registry/image:tag). This parameter can be configured in the CICD by specifying the field in the extra-args.
+    # -- set "stateless[0].image=gcr.io/${gcp_project}/${app_name}:${CIRCLE_SHA1}"docker image to be deployed
+    image: gcr.io/cloud-run/hello:latest
+    # -- Namespace where the service will be deployed
+    envFROM:
+      configEnv: saas-configuration
+      secretEnv: saas-secret
+    # -- (int) Number of replicas
+    replicaCount: 1
+    # -- (bool) Whether or not create the service account
+    serviceAccount:
+      # -- (bool) Whether or not create the service account
+      create: true
+    # -- List of environment variables to be injected in the service
+    env:
+      ENV: "prod"
+      app_name: "saas"
+    # -- Ingress configuration
+    ingress:
+      # -- (string) path to be configured in the ingress
+      uri: "/"
+      # -- (string) Hosts to be configured in the ingress
+      host: "localhost"
+      # -- (string) ingress class name
+      ingressClassName: "traefik-internal"
+      # -- list of annotations for the ingress
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    # -- definition of service
+    service:
+      # -- (int) port exposed on the backend pod
+      internalPort: 8080
+      # -- (string) type of service
+      type: ClusterIP
+      # -- definition of probes (can be exec or http, not both)
+      probe:
+        # -- definition of http based probes
+        http:
+          # -- definition of liveness probe
+          livenessProbe:
+            path: /health
+          # -- definition of readiness probe
+          readinessProbe:
+            path: /ping
+        # -- definition of execution based probes
+        exec:
+          # -- definition of liveness probe
+          livenessProbe:
+            delay: 10
+            commands:
+              - /bin/bash
+              - -c
+              - "pidof -x java"
+          # -- definition of readiness probe
+          readinessProbe:
+            delay: 10
+            commands:
+              - /bin/bash
+              - -c
+              - "pidof -x java"
+    # -- definition of resources
+    resources:
+      cpu: 1
+      memory: 512Mi
+

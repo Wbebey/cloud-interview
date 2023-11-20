@@ -1,5 +1,9 @@
 # ⛅️ Cloud Interview – Test
 
+## Documentation
+
+you can find the documentation in the [docs](docs/README.md) directory
+
 ## About test goals
 
 _This is the list of the crystal clear test's goals._
