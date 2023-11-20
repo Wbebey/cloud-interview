@@ -1,0 +1,20 @@
+releases:
+  - name: ornikar-test
+    chart: infrastructure/helm/stateless-ornikar
+    version: 0.2.0
+    namespace: ornikar
+    values:
+      - .kubernetes/hello-helm.yaml
+    set:
+      - name: stateless[0].image
+        value: "wbarmis/ornikar-hello:1.0.0"
+
+  - name: ornikar-cloud
+    chart: infrastructure/helm/stateless-ornikar
+    version: 0.2.0
+    namespace: ornikar
+    values:
+      - .kubernetes/world-helm.yaml
+    set:
+      - name: stateless[0].image
+        value: "wbarmis/ornikar-world:1.0.0"
